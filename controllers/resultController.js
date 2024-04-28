@@ -127,6 +127,7 @@ exports.store = async (req, res) => {
 
 
         const newWoodProcess = await Results.create({
+            date: new Date(),
             production_capacity: production_capacity,
             human_process_settings: result.human_process,
             wood_process_settings: result.activeWoodProcess,

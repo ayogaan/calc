@@ -7,7 +7,7 @@ exports.store = async (req, res) =>{
         const user_id  = req.user.id;
         console.log(req.body)
         const {process_name, male_resource, female_resource, working_time} = req.body;
-        
+        console.log(req.body)
         const v = createHumanValidator({process_name, male_resource, female_resource, working_time})
         if( v !== true){
             console.log(v);
@@ -20,6 +20,7 @@ exports.store = async (req, res) =>{
         return res.status(200).json({ success: true, message: 'create human process settings', data: newHumanProcess });
 
     }catch(err){
+        console.log(err)
         return res.status(500).json({ success: false, message: 'Failed to fetch users', data: err });
 
     }

@@ -116,9 +116,11 @@ exports.setAsActive = async (req, res) => {
         if(!electricProcess){
             return res.status(404).json({success: false, message: "electric process configuration not found"})
         }
+        await ElectricProcess.update({ is_active: false }, { where: {} });
+
         console.log(!electricProcess.is_active);
 
-        await electricProcess.update({is_active: !electricProcess.is_active})
+        await electricProcess.update({is_active: true})
         return res.status(200).json({ success: true, message: 'Human Process updated successfully', data: electricProcess });
     }catch(error){
         return res.status(500).json({ success: false, message: 'Error updating electric process', error: error.message });

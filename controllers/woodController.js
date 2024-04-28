@@ -103,21 +103,32 @@ exports.destroy = async (req, res)=> {
 }
 
 exports.set = async (req, res)=> {
-    try{
-        const woodProcess = await WoodProcess.findByPk(req.params.id)
-        if(!woodProcess){
-            return res.status(404).json({success:false, message: "wood process not found"});
+    try {
+        // Set isActive to false for all WoodProcess instances
+        await WoodProcess.update({ is_active: false }, { where: {} });
+    
+        // Find the specific WoodProcess instance by primary key
+        const woodProcess = await WoodProcess.findByPk(req.params.id);
+    
+        // Check if the woodProcess exists
+        if (!woodProcess) {
+            return res.status(404).json({ success: false, message: "Wood process not found" });
         }
-        
-        await woodProcess.update({is_active: !woodProcess.is_active})
+    
+        // Update the isActive property of the woodProcess instance
+        await woodProcess.update({ is_active: true });
+    
+        // Return success response
         return res.status(200).json({
             success: true,
-            message : 'wood process updated',
+            message: 'Wood process updated',
             data: woodProcess
-        })
-    }catch(error){
-        return res.status(500).json({success: false, message: "error updating wood process", error: error.message})
+        });
+    } catch (error) {
+        // Return error response if any error occurs
+        return res.status(500).json({ success: false, message: "Error updating wood process", error: error.message });
     }
+    
 }
 
 exports.getActive = async (req, res) => {

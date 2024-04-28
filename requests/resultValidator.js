@@ -3,7 +3,7 @@ const v= new Validator();
 
 exports.createResultValidator = (obj) => {
     const createSchema = {
-        production_capacity: { type: "number", positive: true},
+        production_capacity: { type: "number"},
     };
 
     const check = v.compile(createSchema);

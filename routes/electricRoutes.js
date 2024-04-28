@@ -9,7 +9,7 @@ router.get('/', verifyToken,  electricController.index);
 router.get('/:id', verifyToken,  electricController.show);
 router.put('/:id', verifyToken,  electricController.update);
 router.delete('/:id', verifyToken,  electricController.destroy);
-router.post('/set/:id', verifyToken,  electricController.setAsActive);
+router.post('/activate/:id', verifyToken,  electricController.setAsActive);
 
 
 module.exports = router;

@@ -3,7 +3,7 @@ const v= new Validator();
 
 exports.createWoodValidator = (obj) => {
     const createSchema = {
-        total_woods: { type: "number", positive: true },
+        total_woods: { type: "number"},
     };
 
     const check = v.compile(createSchema);
