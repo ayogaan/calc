@@ -46,7 +46,7 @@ exports.store = async (req, res) => {
         var mj = activeWoodProcess.total_woods * energiEkuivalenKayu;
         var mjPerProd = mj/production_capacity;
         activeWoodProcess.dataValues.result =  {mj:mj, mjPerProd: mjPerProd}
-        
+        console.log('active wood process',activeWoodProcess)
         //emission electric
 
         var eSo2ElectricResultInaDay = kwh * eSo2electric
@@ -68,7 +68,8 @@ exports.store = async (req, res) => {
         //emission wood
         var eSo2WoodResultInaDay = eSo2Wood * activeWoodProcess.total_woods;
         var noxWoodResultInaDay = eNoxWood * activeWoodProcess.total_woods;
-        var co2WoodResultInaDay = eCo2Wood * activeWoodProcess.dataValues.mj / 1000;
+        console.log("check", [eCo2Wood,activeWoodProcess])
+        var co2WoodResultInaDay = eCo2Wood * activeWoodProcess.dataValues.result.mj / 1000;
 
         var eSo2WoodResultInaDayOnKg = eSo2ElectricResultInaDay/1000;
         var noxWoodResultInaDayOnKg = noxWoodResultInaDay/1000;
@@ -275,6 +276,9 @@ exports.downloadResult =async (req, res)=> {
         let electric_process_settings = JSON.parse(result.electric_process_settings);
         let wood_process_settings = JSON.parse(result.wood_process_settings);
         human_process_settings = human_process_settings.map(item=>([item.process_name, item.male_resource, item.female_resource, item.working_time, item?.result?.human_energy?.toFixed(4), item?.result?.human_energy_each_production.toFixed(4)]))
+        let emissionElectricResults = JSON.parse(result.electric_emissions).emissionElectricResults;
+        let emissionWoodResults = JSON.parse(result.wood_emissions).emissionWoodResults;
+        
         const fs = require('fs');
         const PDFDocument = require('pdfkit-table');
         let doc = new PDFDocument({ margin: 30, size: 'A4' });
@@ -340,6 +344,67 @@ exports.downloadResult =async (req, res)=> {
         await doc.table(table3, {
             width: 300,
         });
+        
+        doc.moveDown();
+        const tableElectric = {
+            subtitle: 'Emisi Proses Listrik',
+            headers: [
+                'Emisi', 
+                'eSO2 Dalam Sehari (Kg)', 
+                'NOx Dalam Sehari (Kg)', 
+                'CO2 Dalam Sehari (Kg)', 
+                'eSO2 Per Produksi (Gram)', 
+                'NOx Per Produksi (Gram)', 
+                'CO2 Per Produksi (Gram)'
+            ],
+            rows: [
+                [
+                    'Listrik', 
+                    emissionElectricResults.eSo2ElectricResultInaDay.toFixed(4), 
+                    emissionElectricResults.noxElectricResultInaDay.toFixed(4), 
+                    emissionElectricResults.co2ElectricResultInaDay.toFixed(4), 
+                    emissionElectricResults.eSo2ElectricResultInaDayPerProductionOnGram.toFixed(4), 
+                    emissionElectricResults.noxElectricResultInaDayPerProductionOnGram.toFixed(4), 
+                    emissionElectricResults.co2ElectricResultInaDayPerProductionOnGram.toFixed(4)
+                ]
+            ],
+        };
+        
+        await doc.table(tableElectric, {
+            width: 500,
+        });
+        
+        doc.moveDown();
+
+        const tableWood = {
+            subtitle: 'Emisi Proses Kayu',
+            headers: [
+                'emisi', 
+                'eSO2 Dalam Sehari (Kg)', 
+                'NOx Dalam Sehari (Kg)', 
+                'CO2 Dalam Sehari (Kg)', 
+                'eSO2 Per Produksi (Gram)', 
+                'NOx Per Produksi (Gram)', 
+                'CO2 Per Produksi (Gram)'
+            ],
+            rows: [
+                [
+                    'emisi kayu', 
+                    emissionWoodResults.eSo2WoodResultInaDay.toFixed(4), 
+                    emissionWoodResults.noxWoodResultInaDay.toFixed(4), 
+                    emissionWoodResults.co2WoodResultInaDay.toFixed(4), 
+                    (emissionWoodResults.eSo2WoodResultInaDayPerProductionOnGram).toFixed(4), 
+                    (emissionWoodResults.noxWoodResultInaDayPerProductionOnGram).toFixed(4), 
+                    (emissionWoodResults.co2WoodResultInaDayPerProductionOnGram).toFixed(4)
+                ]
+            ],
+        };
+        
+        await doc.table(tableWood, {
+            width: 500,
+        });
+        
+        
 
         doc.end();
     } catch (error) {

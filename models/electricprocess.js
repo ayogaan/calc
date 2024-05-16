@@ -15,8 +15,8 @@ module.exports = (sequelize, DataTypes) => {
   }
   ElectricProcess.init({
     total_tools: DataTypes.INTEGER,
-    watt_number: DataTypes.INTEGER,
-    working_time: DataTypes.INTEGER,
+    watt_number: DataTypes.FLOAT,
+    working_time: DataTypes.FLOAT,
     is_active: DataTypes.BOOLEAN,
     user_id: DataTypes.INTEGER
   }, {

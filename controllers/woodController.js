@@ -68,6 +68,7 @@ exports.index = async (req, res)=> {
         const offset = (page - 1) * pageSize;
 
         const woodProcess = await WoodProcess.findAndCountAll({
+        where: {user_id: req.user.id},
         limit: +pageSize,
         offset,
         where: {user_id: req.user.id}

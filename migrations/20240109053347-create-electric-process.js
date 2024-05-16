@@ -13,10 +13,10 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       watt_number: {
-        type: Sequelize.INTEGER
+        type: Sequelize.FLOAT
       },
       working_time: {
-        type: Sequelize.INTEGER
+        type: Sequelize.FLOAT
       },
       is_active: {
         type: Sequelize.BOOLEAN

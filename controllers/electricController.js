@@ -75,6 +75,7 @@ exports.index = async (req, res)=> {
         const offset = (page - 1) * pageSize;
 
         const electricProcess = await ElectricProcess.findAndCountAll({
+        where: {user_id: req.user.id},
         limit: +pageSize,
         offset
         
