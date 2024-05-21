@@ -21,6 +21,8 @@ module.exports = (sequelize, DataTypes) => {
     electric_process_settings: DataTypes.JSON,
     wood_emissions: DataTypes.JSON,
     electric_emissions: DataTypes.JSON,
+    solid_emission: DataTypes.FLOAT,
+    liquid_emission: DataTypes.FLOAT,
     user_id: DataTypes.INTEGER
   }, {
     sequelize,

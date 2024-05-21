@@ -135,6 +135,8 @@ exports.store = async (req, res) => {
             electric_process_settings: result.activeElectricProcess,
             wood_emissions: result.wood_emissions,
             electric_emissions: result.electric_emissions,
+            solid_emission: production_capacity * 1.1,
+            liquid_emission:production_capacity * 43.4,
             user_id : req.user.id
         });
 
@@ -271,6 +273,7 @@ exports.downloadResult =async (req, res)=> {
         if (!result) {
             return res.status(404).json({ success: false, message: 'Wood Process not found' });
         }
+        console.log('tes',result.dataValues.solid_emission)
 
         let human_process_settings = JSON.parse(result.human_process_settings);
         let electric_process_settings = JSON.parse(result.electric_process_settings);
@@ -404,7 +407,27 @@ exports.downloadResult =async (req, res)=> {
             width: 500,
         });
         
+        doc.moveDown();
+
+        const tableEmission = {
+            subtitle: 'Emisi',
+            headers: [
+                'limbah padat', 
+                'limbah cair'
+            ],
+            rows: [
+                [
+                
+                    result.solid_emission.toFixed(4), 
+                    result.liquid_emission.toFixed(4), 
+                    
+                ]
+            ],
+        };
         
+        await doc.table(tableEmission, {
+            width: 500,
+        });
 
         doc.end();
     } catch (error) {
