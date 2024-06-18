@@ -1,4 +1,4 @@
-const {WoodProcess, ElectricProcess, Results, HumanProcess} = require('../models');
+const {WoodProcess, ElectricProcess, Results, HumanProcess, User}  = require('../models');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const mailer = require('../helper/mailer');
@@ -270,6 +270,8 @@ exports.downloadResult =async (req, res)=> {
     try {
         const id = req.params.id;
         const result = await Results.findByPk(id);
+        const user = await User.findByPk(result.user_id);
+        console.log('user',user)
         if (!result) {
             return res.status(404).json({ success: false, message: 'Wood Process not found' });
         }
@@ -307,10 +309,11 @@ exports.downloadResult =async (req, res)=> {
         // Skip writing to disk if not needed
         // doc.pipe(fs.createWriteStream('./document.pdf'));
         
+        //console.log(req.user)
         const table = {
-            title: 'Laporan Penghitungan LCA TGL',
-            subtitle: 'Pengaturan Proses Manusia',
-            headers: ['Nama Proses', 'Sumber Daya Pria', 'Sumber Daya Wanita', 'Waktu Kerja', 'human energy', 'human energy each process'],
+            title: `Laporan Penghitungan LCA ${user.username} TGL ${result.createdAt.toISOString().split('T')[0]}`,
+            subtitle: 'Energi Proses Manusia',
+            headers: ['Nama Proses', 'Sumber Daya Pria', 'Sumber Daya Wanita', 'Waktu Kerja', 'Labor Energy', 'Labor Energy Each Process'],
             rows: human_process_settings,
         };
 
@@ -322,7 +325,7 @@ exports.downloadResult =async (req, res)=> {
         doc.moveDown();
         
         const table2 = {
-            subtitle: 'Pengaturan Proses Listrik',
+            subtitle: 'Energi Proses Listrik',
             headers: ['Nama Proses', 'Konsumsi Energi (kWh)', 'Konsumsi Energi (MJ)', 'MJ/Kg', 'kWh/Kg'
         ],
             rows: [
@@ -335,8 +338,9 @@ exports.downloadResult =async (req, res)=> {
         });
 
         doc.moveDown();
+        doc.addPage();
         const table3 = {
-            subtitle: 'Pengaturan Proses Listrik',
+            subtitle: 'Energi Proses Listrik',
             headers: ['Nama Proses', 'Energi (MJ/Hari)', 'Energi (MJ/Kg)'
         ],
             rows: [
@@ -363,9 +367,9 @@ exports.downloadResult =async (req, res)=> {
             rows: [
                 [
                     'Listrik', 
-                    emissionElectricResults.eSo2ElectricResultInaDay.toFixed(4), 
-                    emissionElectricResults.noxElectricResultInaDay.toFixed(4), 
-                    emissionElectricResults.co2ElectricResultInaDay.toFixed(4), 
+                    emissionElectricResults.eSo2ElectricResultInaDayOnKg.toFixed(4), 
+                    emissionElectricResults.noxElectricResultInaDayOnKg.toFixed(4), 
+                    emissionElectricResults.co2ElectricResultInaDayOnKg.toFixed(4), 
                     emissionElectricResults.eSo2ElectricResultInaDayPerProductionOnGram.toFixed(4), 
                     emissionElectricResults.noxElectricResultInaDayPerProductionOnGram.toFixed(4), 
                     emissionElectricResults.co2ElectricResultInaDayPerProductionOnGram.toFixed(4)
@@ -393,9 +397,9 @@ exports.downloadResult =async (req, res)=> {
             rows: [
                 [
                     'emisi kayu', 
-                    emissionWoodResults.eSo2WoodResultInaDay.toFixed(4), 
-                    emissionWoodResults.noxWoodResultInaDay.toFixed(4), 
-                    emissionWoodResults.co2WoodResultInaDay.toFixed(4), 
+                    emissionWoodResults.eSo2WoodResultInaDayOnKg.toFixed(4), 
+                    emissionWoodResults.noxWoodResultInaDayOnKg.toFixed(4), 
+                    emissionWoodResults.co2WoodResultInaDayOnKg.toFixed(4), 
                     (emissionWoodResults.eSo2WoodResultInaDayPerProductionOnGram).toFixed(4), 
                     (emissionWoodResults.noxWoodResultInaDayPerProductionOnGram).toFixed(4), 
                     (emissionWoodResults.co2WoodResultInaDayPerProductionOnGram).toFixed(4)
@@ -406,9 +410,182 @@ exports.downloadResult =async (req, res)=> {
         await doc.table(tableWood, {
             width: 500,
         });
-        
+
         doc.moveDown();
 
+        doc.addPage()
+        const DampakLingkunganEmisiListrik = {
+            subtitle: 'Dampak Lingkungan Emisi Listrik GWP',
+            headers: [
+                'GWP', 
+                'Total (Kg/Hari)',
+               
+            ],
+            rows: [
+                [
+                
+                    emissionElectricResults.co2ElectricResultInaDayOnKg.toFixed(4), 
+                    emissionElectricResults.co2ElectricResultInaDayOnKg.toFixed(4), 
+                    
+                ]
+            ],
+        };
+
+        await doc.table(DampakLingkunganEmisiListrik, {
+            width: 500,
+        });
+
+        doc.moveDown();
+
+        
+
+        
+        const DampakLingkunganEmisiListrikAP = {
+            subtitle: 'Dampak Lingkungan Emisi Listrik AP',
+            headers: [
+                'SO2', 
+                'NOX',
+                'Total (Kg/Hari)',
+            ],
+            rows: [
+                [
+                    emissionElectricResults.eSo2ElectricResultInaDayOnKg.toFixed(4),
+                    emissionElectricResults.noxElectricResultInaDayOnKg.toFixed(4) * 0.7,
+                    (parseFloat(emissionElectricResults.eSo2ElectricResultInaDayOnKg.toFixed(4)) +
+                    parseFloat(emissionElectricResults.noxElectricResultInaDayOnKg.toFixed(4) * 0.7)),
+                    
+                ]
+            ],
+        };
+        
+
+
+
+        //emissionWoodResults.eSo2WoodResultInaDayOnKg.toFixed(4), 
+                    //emissionWoodResults.noxWoodResultInaDayOnKg.toFixed(4) * 0.7
+        await doc.table(DampakLingkunganEmisiListrikAP, {
+            width: 500,
+        });
+
+        doc.moveDown();
+
+
+        
+        const DampakLingkunganEmisiKayu = {
+            subtitle: 'Dampak Lingkungan Emisi Kayu GWP CO2',
+            headers: [
+                'GWP', 
+                'Total (Kg/Hari)',
+               
+            ],
+            rows: [
+                [
+                
+                    emissionWoodResults.co2WoodResultInaDayOnKg.toFixed(4), 
+                    emissionWoodResults.co2WoodResultInaDayOnKg.toFixed(4), 
+                    
+                ]
+            ],
+        };
+
+        await doc.table(DampakLingkunganEmisiKayu, {
+            width: 500,
+        });
+
+        doc.moveDown();
+
+        
+
+        
+        const DampakLingkunganEmisiKayuAP = {
+            subtitle: 'Dampak Lingkungan Emisi Kayu AP',
+            headers: [
+                'SO2', 
+                'NOX',
+                'Total (Kg/Hari)',
+            ],
+            rows: [
+                [
+                    emissionWoodResults.eSo2WoodResultInaDayOnKg.toFixed(4),
+                    emissionWoodResults.noxWoodResultInaDayOnKg.toFixed(4) * 0.7,
+                    (parseFloat(emissionWoodResults.eSo2WoodResultInaDayOnKg.toFixed(4)) +
+                    parseFloat(emissionWoodResults.noxWoodResultInaDayOnKg.toFixed(4) * 0.7)),
+                    
+                ]
+            ],
+        };
+        
+
+
+
+        //emissionWoodResults.eSo2WoodResultInaDayOnKg.toFixed(4), 
+                    //emissionWoodResults.noxWoodResultInaDayOnKg.toFixed(4) * 0.7
+        await doc.table(DampakLingkunganEmisiKayuAP, {
+            width: 500,
+        });
+
+        doc.moveDown();
+
+
+        const DampakLingkunganEmisiKayuTotal = {
+            subtitle: 'Dampak Lingkungan Emisi Kayu Per Tahun',
+            headers: [
+                'Nama',
+                'Total(Ton/Tahun)' 
+                
+            ],
+            rows: [
+                
+                    ['GWP Kayu', 
+                    ((emissionWoodResults.co2WoodResultInaDayOnKg * 312) /1000).toFixed(4), 
+
+                    ],
+                    ['AP Kayu',(parseFloat(emissionWoodResults.eSo2WoodResultInaDayOnKg.toFixed(4)) +
+                    parseFloat(emissionWoodResults.noxWoodResultInaDayOnKg.toFixed(4) * 0.7)) * 312 /1000]
+                    ,
+                    ['Total',((parseFloat(emissionWoodResults.eSo2WoodResultInaDayOnKg.toFixed(4)) +
+                        parseFloat(emissionWoodResults.noxWoodResultInaDayOnKg.toFixed(4) * 0.7)) * 312 /1000) + parseFloat(((emissionWoodResults.co2WoodResultInaDayOnKg * 312) /1000).toFixed(4))]
+                ]
+            ,
+        };
+        await doc.table(DampakLingkunganEmisiKayuTotal, {
+            width: 500,
+        });
+        doc.moveDown();
+        const DampakLingkunganEmisiListrikTotal = {
+            subtitle: 'Dampak Lingkungan Emisi Listrik Per Tahun',
+            headers: [
+                'Nama',
+                'Total(Ton/Tahun)' 
+                
+            ],
+            rows: [
+                
+                    ['GWP Kayu', 
+                    ((emissionElectricResults.co2ElectricResultInaDayOnKg * 312) /1000).toFixed(4), 
+
+                    ],
+                    ['AP Kayu',(parseFloat(emissionElectricResults.eSo2ElectricResultInaDayOnKg.toFixed(4)) +
+                    parseFloat(emissionElectricResults.noxElectricResultInaDayOnKg.toFixed(4) * 0.7)) * 312 /1000],
+
+                    ['AP Kayu',((parseFloat(emissionElectricResults.eSo2ElectricResultInaDayOnKg.toFixed(4)) +
+                        parseFloat(emissionElectricResults.noxElectricResultInaDayOnKg.toFixed(4) * 0.7)) * 312 /1000) + parseFloat(((emissionElectricResults.co2ElectricResultInaDayOnKg * 312) /1000).toFixed(4))]
+                ]
+            ,
+        };
+
+        
+
+        //emissionWoodResults.eSo2WoodResultInaDayOnKg.toFixed(4), 
+                    //emissionWoodResults.noxWoodResultInaDayOnKg.toFixed(4) * 0.7
+        await doc.table(DampakLingkunganEmisiListrikTotal, {
+            width: 500,
+        });
+
+        doc.moveDown();
+
+
+        
         const tableEmission = {
             subtitle: 'Emisi',
             headers: [
