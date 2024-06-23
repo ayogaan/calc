@@ -15,6 +15,9 @@ module.exports = {
       production_capacity: {
         type: Sequelize.INTEGER
       },
+      raw_materials: {
+        type: Sequelize.FLOAT
+      },
       human_process_settings: {
         type: Sequelize.JSON
       },

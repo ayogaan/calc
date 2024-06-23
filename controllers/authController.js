@@ -76,7 +76,7 @@ exports.register = async (req, res) => {
 exports.login = async (req,res) =>{
     try {
         var { email, password } = req.body;
-        console.log(email);
+        console.log('email',email);
         const userLoggedin = await User.findOne({ where: { email } });
 
         if (!userLoggedin) {

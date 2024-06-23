@@ -7,10 +7,11 @@ const { createResultValidator } = require('../requests/resultValidator');
 
 exports.store = async (req, res) => {
     try {
+        console.log("tes tes tes");
         const activeWoodProcess = await WoodProcess.findOne({ where: { is_active: true, user_id: req.user.id } });
         const activeElectricProcess = await ElectricProcess.findOne({ where: { is_active: true, user_id: req.user.id } });
         const currentHumanProcess = await HumanProcess.findAll({ raw: true, where: {user_id: req.user.id} });
-        const { production_capacity } = req.body;
+        const { production_capacity, raw_materials  } = req.body;
         const eSo2electric =  1
         const eNoxElectric = 8.5500
         const eCo2Electric =  0.7744
@@ -48,15 +49,15 @@ exports.store = async (req, res) => {
         activeWoodProcess.dataValues.result =  {mj:mj, mjPerProd: mjPerProd}
         console.log('active wood process',activeWoodProcess)
         //emission electric
-
+        console.log('kwh',kwh)
         var eSo2ElectricResultInaDay = kwh * eSo2electric
         var noxElectricResultInaDay = kwh * eNoxElectric
         var co2ElectricResultInaDay = kwh * eCo2Electric
 
-        var eSo2ElectricResultInaDayOnKg = kwh * eSo2electric/1000 
-        var noxElectricResultInaDayOnKg = kwh * eNoxElectric/1000
-        var co2ElectricResultInaDayOnKg = kwh * eCo2Electric/1000
-
+        var eSo2ElectricResultInaDayOnKg = ( eSo2ElectricResultInaDay)/1000 
+        var noxElectricResultInaDayOnKg = ( noxElectricResultInaDay)/1000
+        var co2ElectricResultInaDayOnKg = ( co2ElectricResultInaDay)
+        console.log('result',[eSo2ElectricResultInaDayOnKg, noxElectricResultInaDayOnKg, co2ElectricResultInaDayOnKg])
         var eSo2ElectricResultInaDayPerProduction = eSo2ElectricResultInaDayOnKg/production_capacity
         var noxElectricResultInaDayPerProduction = noxElectricResultInaDayOnKg/production_capacity
         var co2ElectricResultInaDayPerProduction = co2ElectricResultInaDayOnKg/production_capacity
@@ -71,7 +72,7 @@ exports.store = async (req, res) => {
         console.log("check", [eCo2Wood,activeWoodProcess])
         var co2WoodResultInaDay = eCo2Wood * activeWoodProcess.dataValues.result.mj / 1000;
 
-        var eSo2WoodResultInaDayOnKg = eSo2ElectricResultInaDay/1000;
+        var eSo2WoodResultInaDayOnKg = eSo2WoodResultInaDay/1000;
         var noxWoodResultInaDayOnKg = noxWoodResultInaDay/1000;
         var co2WoodResultInaDayOnKg = co2WoodResultInaDay * 1000;
 
@@ -137,7 +138,8 @@ exports.store = async (req, res) => {
             electric_emissions: result.electric_emissions,
             solid_emission: production_capacity * 1.1,
             liquid_emission:production_capacity * 43.4,
-            user_id : req.user.id
+            user_id : req.user.id,
+            raw_materials: raw_materials
         });
 
         return res.status(200).json({ success: true, message: 'Create wood process settings', data: newWoodProcess });
@@ -308,15 +310,48 @@ exports.downloadResult =async (req, res)=> {
 
         // Skip writing to disk if not needed
         // doc.pipe(fs.createWriteStream('./document.pdf'));
-        
+        //  TGL ${result.createdAt.toISOString().split('T')[0]} 
         //console.log(req.user)
+        
+        const tableHead = {
+            title: `Laporan Penghitungan LCA Industri Tahu`,
+            headers: ['', '', ],
+            rows: [
+                ['Nama',user.username],
+                ['Tanggal', result.createdAt.toISOString().split('T')[0]],
+                ['Jumlah Bahan Baku', result.raw_materials || 0],
+                ['Estimasi Produk Akhir', (result.production_capacity * 3.2).toFixed(4) + 'kg' || 0]
+            
+            ],
+        };
+
+        await doc.table(tableHead, {
+            width: 250,
+        });
+
+        doc.moveDown();
+
         const table = {
-            title: `Laporan Penghitungan LCA ${user.username} TGL ${result.createdAt.toISOString().split('T')[0]}`,
-            subtitle: 'Energi Proses Manusia',
+
+            subtitle: 'Energi Manusia',
             headers: ['Nama Proses', 'Sumber Daya Pria', 'Sumber Daya Wanita', 'Waktu Kerja', 'Labor Energy', 'Labor Energy Each Process'],
             rows: human_process_settings,
         };
-
+        function sumColumns(rows) {
+            const sums = Array(rows[0].length).fill(0);
+            rows.forEach(row => {
+                row.forEach((cell, index) => {
+                    if (index!==0) {
+                        sums[index] += +cell;
+                    }
+                });
+            });
+            sums[0] = 'Total';  // Set the name for the sum row
+            return sums;
+        }
+        
+        const sumRow = sumColumns(human_process_settings);
+        table.rows.push(sumRow)
         await doc.table(table, {
             width: 500,
         });
@@ -325,7 +360,7 @@ exports.downloadResult =async (req, res)=> {
         doc.moveDown();
         
         const table2 = {
-            subtitle: 'Energi Proses Listrik',
+            subtitle: 'Energi Listrik',
             headers: ['Nama Proses', 'Konsumsi Energi (kWh)', 'Konsumsi Energi (MJ)', 'MJ/Kg', 'kWh/Kg'
         ],
             rows: [
@@ -338,9 +373,9 @@ exports.downloadResult =async (req, res)=> {
         });
 
         doc.moveDown();
-        doc.addPage();
+        
         const table3 = {
-            subtitle: 'Energi Proses Listrik',
+            subtitle: 'Energi Kayu',
             headers: ['Nama Proses', 'Energi (MJ/Hari)', 'Energi (MJ/Kg)'
         ],
             rows: [
@@ -367,9 +402,9 @@ exports.downloadResult =async (req, res)=> {
             rows: [
                 [
                     'Listrik', 
-                    emissionElectricResults.eSo2ElectricResultInaDayOnKg.toFixed(4), 
-                    emissionElectricResults.noxElectricResultInaDayOnKg.toFixed(4), 
-                    emissionElectricResults.co2ElectricResultInaDayOnKg.toFixed(4), 
+                    emissionElectricResults.eSo2ElectricResultInaDayOnKg, 
+                    emissionElectricResults.noxElectricResultInaDayOnKg, 
+                    emissionElectricResults.co2ElectricResultInaDayOnKg, 
                     emissionElectricResults.eSo2ElectricResultInaDayPerProductionOnGram.toFixed(4), 
                     emissionElectricResults.noxElectricResultInaDayPerProductionOnGram.toFixed(4), 
                     emissionElectricResults.co2ElectricResultInaDayPerProductionOnGram.toFixed(4)
@@ -424,8 +459,8 @@ exports.downloadResult =async (req, res)=> {
             rows: [
                 [
                 
-                    emissionElectricResults.co2ElectricResultInaDayOnKg.toFixed(4), 
-                    emissionElectricResults.co2ElectricResultInaDayOnKg.toFixed(4), 
+                    emissionElectricResults.co2ElectricResultInaDayOnKg, 
+                    emissionElectricResults.co2ElectricResultInaDayOnKg, 
                     
                 ]
             ],
@@ -449,10 +484,10 @@ exports.downloadResult =async (req, res)=> {
             ],
             rows: [
                 [
-                    emissionElectricResults.eSo2ElectricResultInaDayOnKg.toFixed(4),
-                    emissionElectricResults.noxElectricResultInaDayOnKg.toFixed(4) * 0.7,
-                    (parseFloat(emissionElectricResults.eSo2ElectricResultInaDayOnKg.toFixed(4)) +
-                    parseFloat(emissionElectricResults.noxElectricResultInaDayOnKg.toFixed(4) * 0.7)),
+                    emissionElectricResults.eSo2ElectricResultInaDayOnKg,
+                    emissionElectricResults.noxElectricResultInaDayOnKg * 0.7,
+                    (parseFloat(emissionElectricResults.eSo2ElectricResultInaDayOnKg) +
+                    parseFloat(emissionElectricResults.noxElectricResultInaDayOnKg * 0.7)),
                     
                 ]
             ],
@@ -481,8 +516,8 @@ exports.downloadResult =async (req, res)=> {
             rows: [
                 [
                 
-                    emissionWoodResults.co2WoodResultInaDayOnKg.toFixed(4), 
-                    emissionWoodResults.co2WoodResultInaDayOnKg.toFixed(4), 
+                    emissionWoodResults.co2WoodResultInaDayOnKg, 
+                    emissionWoodResults.co2WoodResultInaDayOnKg, 
                     
                 ]
             ],
@@ -506,10 +541,10 @@ exports.downloadResult =async (req, res)=> {
             ],
             rows: [
                 [
-                    emissionWoodResults.eSo2WoodResultInaDayOnKg.toFixed(4),
-                    emissionWoodResults.noxWoodResultInaDayOnKg.toFixed(4) * 0.7,
-                    (parseFloat(emissionWoodResults.eSo2WoodResultInaDayOnKg.toFixed(4)) +
-                    parseFloat(emissionWoodResults.noxWoodResultInaDayOnKg.toFixed(4) * 0.7)),
+                    emissionWoodResults.eSo2WoodResultInaDayOnKg,
+                    emissionWoodResults.noxWoodResultInaDayOnKg * 0.7,
+                    (parseFloat(emissionWoodResults.eSo2WoodResultInaDayOnKg) +
+                    parseFloat(emissionWoodResults.noxWoodResultInaDayOnKg * 0.7)),
                     
                 ]
             ],
@@ -528,7 +563,7 @@ exports.downloadResult =async (req, res)=> {
 
 
         const DampakLingkunganEmisiKayuTotal = {
-            subtitle: 'Dampak Lingkungan Emisi Kayu Per Tahun',
+            subtitle: 'Dampak Lingkungan GWP Per Tahun',
             headers: [
                 'Nama',
                 'Total(Ton/Tahun)' 
@@ -537,14 +572,19 @@ exports.downloadResult =async (req, res)=> {
             rows: [
                 
                     ['GWP Kayu', 
-                    ((emissionWoodResults.co2WoodResultInaDayOnKg * 312) /1000).toFixed(4), 
+                    ((emissionWoodResults.co2WoodResultInaDayOnKg * 312) /1000), 
 
                     ],
-                    ['AP Kayu',(parseFloat(emissionWoodResults.eSo2WoodResultInaDayOnKg.toFixed(4)) +
-                    parseFloat(emissionWoodResults.noxWoodResultInaDayOnKg.toFixed(4) * 0.7)) * 312 /1000]
-                    ,
-                    ['Total',((parseFloat(emissionWoodResults.eSo2WoodResultInaDayOnKg.toFixed(4)) +
-                        parseFloat(emissionWoodResults.noxWoodResultInaDayOnKg.toFixed(4) * 0.7)) * 312 /1000) + parseFloat(((emissionWoodResults.co2WoodResultInaDayOnKg * 312) /1000).toFixed(4))]
+                    ['GWP Listrik', 
+                        ((emissionElectricResults.co2ElectricResultInaDayOnKg * 312) /1000), 
+    
+                        ],
+                    
+                        ['Total', 
+                            ((emissionWoodResults.co2WoodResultInaDayOnKg * 312) /1000) +
+                            ((emissionElectricResults.co2ElectricResultInaDayOnKg * 312) /1000) 
+            
+                        ]
                 ]
             ,
         };
@@ -552,8 +592,10 @@ exports.downloadResult =async (req, res)=> {
             width: 500,
         });
         doc.moveDown();
+        console.log("check is undefined")
+       
         const DampakLingkunganEmisiListrikTotal = {
-            subtitle: 'Dampak Lingkungan Emisi Listrik Per Tahun',
+            subtitle: 'Dampak Lingkungan AP Per Tahun',
             headers: [
                 'Nama',
                 'Total(Ton/Tahun)' 
@@ -561,15 +603,17 @@ exports.downloadResult =async (req, res)=> {
             ],
             rows: [
                 
-                    ['GWP Kayu', 
-                    ((emissionElectricResults.co2ElectricResultInaDayOnKg * 312) /1000).toFixed(4), 
+                    ['AP Kayu',(parseFloat(emissionWoodResults.eSo2WoodResultInaDayOnKg) +
+                    parseFloat(emissionWoodResults.noxWoodResultInaDayOnKg * 0.7)) * 312 /1000],
 
-                    ],
-                    ['AP Kayu',(parseFloat(emissionElectricResults.eSo2ElectricResultInaDayOnKg.toFixed(4)) +
-                    parseFloat(emissionElectricResults.noxElectricResultInaDayOnKg.toFixed(4) * 0.7)) * 312 /1000],
+                    ['AP Listrik',(parseFloat(emissionElectricResults.eSo2ElectricResultInaDayOnKg) +
+                    parseFloat(emissionElectricResults.noxElectricResultInaDayOnKg * 0.7)) * 312 /1000],
 
-                    ['AP Kayu',((parseFloat(emissionElectricResults.eSo2ElectricResultInaDayOnKg.toFixed(4)) +
-                        parseFloat(emissionElectricResults.noxElectricResultInaDayOnKg.toFixed(4) * 0.7)) * 312 /1000) + parseFloat(((emissionElectricResults.co2ElectricResultInaDayOnKg * 312) /1000).toFixed(4))]
+                    ['Total',((parseFloat(emissionWoodResults.eSo2WoodResultInaDayOnKg) +
+                        parseFloat(emissionWoodResults.noxWoodResultInaDayOnKg * 0.7)) * 312 /1000) + 
+                        (parseFloat(emissionElectricResults.eSo2ElectricResultInaDayOnKg) +
+                        parseFloat(emissionElectricResults.noxElectricResultInaDayOnKg * 0.7)) * 312 /1000],
+                        
                 ]
             ,
         };
@@ -587,10 +631,10 @@ exports.downloadResult =async (req, res)=> {
 
         
         const tableEmission = {
-            subtitle: 'Emisi',
+            subtitle: 'Limbah',
             headers: [
-                'limbah padat', 
-                'limbah cair'
+                'Limbah padat', 
+                'Limbah cair'
             ],
             rows: [
                 [

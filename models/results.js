@@ -16,6 +16,7 @@ module.exports = (sequelize, DataTypes) => {
   Results.init({
     date: DataTypes.DATE,
     production_capacity: DataTypes.INTEGER,
+    raw_materials:DataTypes.FLOAT,
     human_process_settings: DataTypes.JSON,
     wood_process_settings: DataTypes.JSON,
     electric_process_settings: DataTypes.JSON,
