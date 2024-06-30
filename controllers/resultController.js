@@ -620,7 +620,7 @@ exports.downloadResult = async (req, res) => {
 
 
         const tableEmission = {
-            subtitle: 'Limbah',
+            subtitle: 'Estimasi Limbah',
             headers: [
                 'Limbah padat',
                 'Limbah cair'
