@@ -71,7 +71,10 @@ exports.index = async (req, res)=> {
         where: {user_id: req.user.id},
         limit: +pageSize,
         offset,
-        where: {user_id: req.user.id}
+        where: {user_id: req.user.id},
+        order: [
+            ['createdAt', 'DESC']
+          ]
         });
 
         return res.status(200).json({

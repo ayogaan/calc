@@ -22,6 +22,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 app.use(morgan('combined'));
 app.use(expressFileUpload())
+app.use('/assets', express.static(path.join(__dirname, 'assets')));
 app.use('/api/user', authRoutes);
 app.use('/api/human', humanRoutes);
 app.use('/api/wood', woodRoutes);
