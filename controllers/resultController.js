@@ -345,7 +345,7 @@ exports.downloadResult = async (req, res) => {
             rows.forEach(row => {
                 row.forEach((cell, index) => {
                     if (index !== 0) {
-                        sums[index] += +cell;
+                        sums[index] += +(+cell).toFixed(4);
                     }
                 });
             });
@@ -405,9 +405,9 @@ exports.downloadResult = async (req, res) => {
             rows: [
                 [
                     'Listrik',
-                    emissionElectricResults.eSo2ElectricResultInaDayOnKg,
-                    emissionElectricResults.noxElectricResultInaDayOnKg,
-                    emissionElectricResults.co2ElectricResultInaDayOnKg,
+                    emissionElectricResults.eSo2ElectricResultInaDayOnKg.toFixed(4),
+                    emissionElectricResults.noxElectricResultInaDayOnKg.toFixed(4),
+                    emissionElectricResults.co2ElectricResultInaDayOnKg.toFixed(4),
                     (emissionElectricResults.eSo2ElectricResultInaDayPerProductionOnGram/1000).toFixed(4),
                     (emissionElectricResults.noxElectricResultInaDayPerProductionOnGram/1000).toFixed(4),
                     (emissionElectricResults.co2ElectricResultInaDayPerProductionOnGram/1000).toFixed(4)
