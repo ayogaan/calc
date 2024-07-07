@@ -14,6 +14,8 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   ElectricProcess.init({
+    process_name: DataTypes.STRING,
+    tools_name: DataTypes.INTEGER,
     total_tools: DataTypes.INTEGER,
     watt_number: DataTypes.FLOAT,
     working_time: DataTypes.FLOAT,

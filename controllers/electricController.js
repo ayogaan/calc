@@ -13,14 +13,13 @@ exports.store = async (req, res) =>{
         // is_active: DataTypes.BOOLEAN,
         // user_id: DataTypes.INTEGER
         const user_id = req.user.id
-        const {total_tools, watt_number, working_time, is_active} = req.body;
-        const v = createElectricValidator({total_tools, watt_number, working_time, is_active})
+        const {process_name,tools_name,total_tools, watt_number, working_time, is_active} = req.body;
+        const v = createElectricValidator({process_name, tools_name,total_tools, watt_number, working_time, is_active})
         if( v !== true){
             return res.status(422).json({ success: true, message: 'failed input electric process', error: v });
         };
-        console.log({total_tools, watt_number, working_time, is_active, user_id});
         const newElectricProcess = await ElectricProcess.create(
-            {total_tools, watt_number, working_time, is_active, user_id}
+            { process_name,tools_name,total_tools, watt_number, working_time, is_active, user_id}
         );
         return res.status(200).json({ success: true, message: 'create electric process settings', data: newElectricProcess });
 
@@ -33,20 +32,20 @@ exports.store = async (req, res) =>{
 exports.update = async (req, res) =>{
     try {
         const id = req.params.id;
-        const {total_tools, watt_number, working_time, is_active} = req.body;
+        const {process_name,tools_name, total_tools, watt_number, working_time, is_active} = req.body;
         const electricProcess = await ElectricProcess.findByPk(id);
 
         if (!electricProcess) {
         return res.status(404).json({ success: false, message: 'Electric Process not found' });
         }
 
-        const v = createElectricValidator({total_tools, watt_number, working_time, is_active})
+        const v = createElectricValidator({process_name,tools_name,total_tools, watt_number, working_time, is_active})
         if( v !== true){
             return res.status(422).json({ success: true, message: 'failed input electric process', error: v });
         };
 
         await electricProcess.update(
-            {total_tools, watt_number, working_time, is_active}
+            {process_name, tools_name,total_tools, watt_number, working_time, is_active}
         );
 
         return res.status(200).json({ success: true, message: 'Human Process updated successfully', data: electricProcess });
