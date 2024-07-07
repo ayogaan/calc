@@ -524,7 +524,7 @@ exports.downloadResult = async (req, res) => {
             ],
             rows: [
                 [
-                    'emisi kayu',
+                    'kayu',
                     emissionWoodResults.eSo2WoodResultInaDayOnKg.toFixed(4),
                     emissionWoodResults.noxWoodResultInaDayOnKg.toFixed(4),
                     emissionWoodResults.co2WoodResultInaDayOnKg.toFixed(4),
@@ -545,7 +545,7 @@ exports.downloadResult = async (req, res) => {
         const DampakLingkunganEmisiListrik = {
             subtitle: 'Dampak Lingkungan Emisi Listrik GWP',
             headers: [
-                'GWP',
+                'CO2',
                 'Total (kg/Hari)',
 
             ],
@@ -597,9 +597,9 @@ exports.downloadResult = async (req, res) => {
 
         doc.moveDown();
         const DampakLingkunganEmisiKayu = {
-            subtitle: 'Dampak Lingkungan Emisi Kayu GWP CO2',
+            subtitle: 'Dampak Lingkungan Emisi Kayu GWP',
             headers: [
-                'GWP',
+                'CO2',
                 'Total (kg/Hari)',
 
             ],
