@@ -210,11 +210,11 @@ exports.show = async (req, res) => {
         let emissionElectricResults = JSON.parse(result.electric_emissions).emissionElectricResults;
 
         const gwp = [{
-            name: 'GWP Kayu',
+            name: 'CO2',
             result: ((emissionWoodResults.co2WoodResultInaDayOnKg * 312) / 1000).toFixed(4),
         },
         {
-            name: 'GWP Listrik',
+            name: 'CO2',
             result: ((emissionElectricResults.co2ElectricResultInaDayOnKg * 312) / 1000).toFixed(4),
         },
         {
@@ -655,10 +655,10 @@ exports.downloadResult = async (req, res) => {
             ],
             rows: [
 
-                ['GWP Kayu',
+                ['CO2',
                     ((emissionWoodResults.co2WoodResultInaDayOnKg * 312) / 1000).toFixed(4),
                 ],
-                ['GWP Listrik',
+                ['CO2',
                     ((emissionElectricResults.co2ElectricResultInaDayOnKg * 312) / 1000).toFixed(4),
                 ],
                 ['Total',
