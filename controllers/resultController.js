@@ -251,12 +251,12 @@ exports.show = async (req, res) => {
         ]
         const listrikGwp = [
 
-            {name:'GWP listrik', result:emissionElectricResults.co2ElectricResultInaDayOnKg.toFixed(4)},
+            {name:'CO2', result:emissionElectricResults.co2ElectricResultInaDayOnKg.toFixed(4)},
             {name:'total', result:emissionElectricResults.co2ElectricResultInaDayOnKg.toFixed(4)},
             {name:'', result:''}
         ]
         const kayuGwp = [
-            {name: 'GWP Kayu', result:emissionWoodResults.co2WoodResultInaDayOnKg.toFixed(4)},
+            {name: 'CO2', result:emissionWoodResults.co2WoodResultInaDayOnKg.toFixed(4)},
             {name: 'total', result:emissionWoodResults.co2WoodResultInaDayOnKg.toFixed(4)},
             {name:'', result:''}
         ]
