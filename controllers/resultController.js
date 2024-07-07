@@ -210,11 +210,11 @@ exports.show = async (req, res) => {
         let emissionElectricResults = JSON.parse(result.electric_emissions).emissionElectricResults;
 
         const gwp = [{
-            name: 'CO2',
+            name: 'GWP Kayu',
             result: ((emissionWoodResults.co2WoodResultInaDayOnKg * 312) / 1000).toFixed(4),
         },
         {
-            name: 'CO2',
+            name: 'GWP Listrik',
             result: ((emissionElectricResults.co2ElectricResultInaDayOnKg * 312) / 1000).toFixed(4),
         },
         {
