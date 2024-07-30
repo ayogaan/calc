@@ -409,6 +409,7 @@ exports.downloadResult = async (req, res) => {
             headers: ['', '',],
             rows: [
                 ['Nama', user.username],
+                ['Nama Industri', user.industry_name],
                 ['Tanggal', result.createdAt.toISOString().split('T')[0]],
                 ['Jumlah Bahan Baku', result.production_capacity + "kg" || 0],
                 ['Estimasi Produk Akhir', (result.production_capacity * 3.2).toFixed(4) + 'kg' || 0]

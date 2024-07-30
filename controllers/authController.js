@@ -54,13 +54,14 @@ exports.updateUser = async (req, res)=> {
 exports.register = async (req, res) => {
     try {
         console.log(req.body.name)
-        var { username, password, email } = req.body;
+        var { username, password, email, industry_name } = req.body;
         
         const hashedPassword = await hashPassword(password)
         const newuser = await User.create({
                     username,
                     email,
                     password: hashedPassword,
+                    industry_name
                   });
         
         const token = jwt.sign({ id: newuser.id, name: newuser.username }, 'yourSecretKey', {
